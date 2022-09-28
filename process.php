@@ -1,25 +1,33 @@
 <?php
 require_once('config.php');
-?>
 
-<?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-if(isset($_POST)){
 
-    $firstname 		= $_POST['firstname'];
-    $lastname 		= $_POST['lastname'];
-    $email 			= $_POST['email'];
-    $phonenumber	= $_POST['phonenumber'];
-    $password 		= sha1($_POST['password']);
+    $data = json_decode(file_get_contents('php://input'), true);
 
-        $sql = "INSERT INTO users (firstname, lastname, email, phonenumber, password ) VALUES(?,?,?,?,?)";
-        $stmtinsert = $db->prepare($sql);
-        $result = $stmtinsert->execute([$firstname, $lastname, $email, $phonenumber, $password]);
-        if($result){
-            echo 'Successfully saved.';
-        }else{
-            echo 'There were erros while saving the data.';
-        }
-    }else{
-        echo    'No data';
+    $firstname = $data['firstname'];
+    $lastname = $data['lastname'];
+    $email = $data['email'];
+    $phonenumber = $data['phonenumber'];
+    $password = sha1($data['password']);
+
+    $sql = "INSERT INTO users (firstname, lastname, email, phonenumber, password ) VALUES(?,?,?,?,?)";
+    $stmtinsert = $db->prepare($sql);
+    $result = $stmtinsert->execute([$firstname, $lastname, $email, $phonenumber, $password]);
+    $payload = [
+        'status' => TRUE,
+        'message' => 'Successfully saved.'
+    ];
+    $payload['status'] = TRUE;
+    $payload['message'] = 'Successfully saved.';
+
+    if ($result === FALSE) {
+        $payload['status'] = FALSE;
+        $payload['message'] = 'There were erros while saving the data.';
     }
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($payload);
+} else {
+    http_response_code(404);
+}
